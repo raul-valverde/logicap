@@ -1,0 +1,153 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password": "Admin#EcoLog2026",
+      "name": "Lic. Roberto Méndez (Administrador)",
+      "role": "admin",
+      "phone": "+505 8888-0001",
+      "vehicle": ""
+    },
+    {
+      "id": 2,
+      "username": "carlos.ventas",
+      "password": "Ventas1*Eco2026",
+      "name": "Carlos Gómez (Ventas)",
+      "role": "vendedor",
+      "phone": "+505 8456-7890",
+      "vehicle": ""
+    },
+    {
+      "id": 3,
+      "username": "maria.ventas",
+      "password": "Ventas2*Eco2026",
+      "name": "María López (Ventas)",
+      "role": "vendedor",
+      "phone": "+505 8521-9988",
+      "vehicle": ""
+    },
+    {
+      "id": 4,
+      "username": "juan.chofer",
+      "password": "Chofer1!Eco2026",
+      "name": "Juan Martínez (Chofer)",
+      "role": "conductor",
+      "phone": "+505 8899-1122",
+      "vehicle": "Camión Hino 3.5T - Placa M-32091"
+    },
+    {
+      "id": 5,
+      "username": "pedro.chofer",
+      "password": "Chofer2!Eco2026",
+      "name": "Pedro Sánchez (Chofer)",
+      "role": "conductor",
+      "phone": "+505 8765-4321",
+      "vehicle": "Panel Isuzu 1.5T - Placa M-41088"
+    },
+    {
+      "id": 6,
+      "username": "ana.factura",
+      "password": "Factura$Eco2026",
+      "name": "Ana Morales (Facturación)",
+      "role": "facturadora",
+      "phone": "+505 8222-3344",
+      "vehicle": ""
+    },
+    {
+      "id": 7,
+      "username": "roberto.logistica",
+      "password": "Logistica%Eco2026",
+      "name": "Roberto Díaz (Logística)",
+      "role": "logistica",
+      "phone": "+505 8111-2233",
+      "vehicle": ""
+    },
+    {
+      "id": 8,
+      "username": "mario.bodega",
+      "password": "Bodega#Eco2026",
+      "name": "Mario Rivas (Bodega)",
+      "role": "bodeguero",
+      "phone": "+505 8333-4455",
+      "vehicle": ""
+    }
+  ],
+  "clients": [
+    {
+      "id": 1,
+      "code": "CLI-001",
+      "name": "Farmacia La Salud",
+      "address": "Av. Central 123, Frente al Parque",
+      "phone": "2244-5566",
+      "lat": "12.136389",
+      "lng": "-86.251389"
+    },
+    {
+      "id": 2,
+      "code": "CLI-002",
+      "name": "Distribuidora Verde",
+      "address": "Km 5 Carretera a Masaya, Costado Este",
+      "phone": "2278-9900",
+      "lat": "12.115000",
+      "lng": "-86.230000"
+    },
+    {
+      "id": 3,
+      "code": "CLI-003",
+      "name": "Taller Central S.A.",
+      "address": "Rotonda Bello Horizonte 2c abajo",
+      "phone": "2249-1234",
+      "lat": "12.145000",
+      "lng": "-86.240000"
+    },
+    {
+      "id": 4,
+      "code": "CLI-004",
+      "name": "Supermercado EcoFresh",
+      "address": "Plaza España módulo 4, Pista Benjamín Zeledón",
+      "phone": "2266-7788",
+      "lat": "12.128000",
+      "lng": "-86.275000"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "code": "PROD-001",
+      "name": "Detergente Ecológico Concentrado 1L",
+      "price": 12.5,
+      "stock": 250
+    },
+    {
+      "id": 2,
+      "code": "PROD-002",
+      "name": "Desinfectante Biodegradable Pino 500ml",
+      "price": 8,
+      "stock": 180
+    },
+    {
+      "id": 3,
+      "code": "PROD-003",
+      "name": "Limpiador Multiuso Cítrico 1 Galón",
+      "price": 18,
+      "stock": 90
+    },
+    {
+      "id": 4,
+      "code": "PROD-004",
+      "name": "Jabón Líquido Antibacterial Manos 1L",
+      "price": 6.5,
+      "stock": 140
+    },
+    {
+      "id": 5,
+      "code": "PROD-005",
+      "name": "Papel Toalla Industrial Reciclado Bobina",
+      "price": 14,
+      "stock": 75
+    }
+  ],
+  "orders": [],
+  "routes": []
+}

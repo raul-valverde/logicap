@@ -1,0 +1,2120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoLogística ERP & WMS - Sistema de Rutas y Picking</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+              950: '#022c22'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    @media print {
+      body * { visibility: hidden; }
+      #printableReport, #printableReport * { visibility: visible; }
+      #printableReport {
+        position: absolute; left: 0; top: 0; width: 100%;
+        padding: 20px; margin: 0; background: white !important; color: black !important;
+      }
+      .no-print { display: none !important; }
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- TOAST NOTIFICATIONS CONTAINER -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none no-print"></div>
+
+  <!-- DATALISTS FOR AUTOCOMPLETE -->
+  <datalist id="dl_clients"></datalist>
+  <datalist id="dl_products"></datalist>
+
+  <!-- ======================================================== -->
+  <!-- 1. LOGIN SCREEN -->
+  <!-- ======================================================== -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-brand-900 via-brand-800 to-slate-900 no-print">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 sm:p-10 max-w-md w-full border border-emerald-100 relative overflow-hidden">
+      <!-- Decorative background glow -->
+      <div class="absolute -top-16 -right-16 w-36 h-36 bg-brand-200 rounded-full blur-2xl opacity-60"></div>
+      <div class="absolute -bottom-16 -left-16 w-36 h-36 bg-brand-400 rounded-full blur-2xl opacity-30"></div>
+
+      <div class="relative text-center">
+        <div class="inline-flex p-3 rounded-2xl bg-brand-50 border border-brand-200 text-brand-600 mb-4 shadow-sm">
+          <i class="fa-solid fa-truck-ramp-box text-3xl"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">EcoLogística Express</h1>
+        <p class="text-xs text-brand-700 font-semibold mt-1">Gestión Inteligente de Rutas, Picking & Despachos</p>
+
+        <div class="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl text-left text-xs text-slate-600 flex items-center gap-2.5">
+          <i class="fa-solid fa-shield-halved text-brand-600 text-lg shrink-0"></i>
+          <div>
+            <p class="font-bold text-slate-800">Acceso Seguro al Sistema</p>
+            <p class="text-[11px] text-slate-500">Ingresa tus credenciales asignadas por Administración.</p>
+          </div>
+        </div>
+
+        <form onsubmit="handleLogin(event)" class="mt-5 space-y-4 text-left">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Nombre de Usuario</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="fa-solid fa-user"></i>
+              </span>
+              <input id="loginUser" type="text" placeholder="Ingresa tu usuario" required
+                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Contraseña</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="fa-solid fa-lock"></i>
+              </span>
+              <input id="loginPass" type="password" placeholder="••••••••••••" required
+                class="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+            </div>
+          </div>
+
+          <button type="submit"
+            class="w-full mt-2 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg shadow-brand-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+            <span>Iniciar Sesión</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- 2. MAIN APPLICATION -->
+  <!-- ======================================================== -->
+  <div id="appScreen" class="hidden min-h-screen flex flex-col">
+
+    <!-- TOP NAVBAR -->
+    <header class="bg-brand-900 text-white shadow-md sticky top-0 z-40 no-print">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+        <!-- Logo and App Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-brand-700/80 border border-brand-500/30 flex items-center justify-center shadow-inner">
+            <i class="fa-solid fa-truck-fast text-brand-300 text-lg"></i>
+          </div>
+          <div>
+            <h1 class="font-extrabold text-base tracking-tight leading-none text-white flex items-center gap-2">
+              EcoLogística <span class="text-brand-400 font-bold text-xs bg-brand-800 px-2 py-0.5 rounded-full border border-brand-700">WMS/ERP</span>
+            </h1>
+            <p class="text-[11px] text-brand-300 font-medium">Gestión en Tiempo Real de Rutas & Despachos</p>
+          </div>
+        </div>
+
+        <!-- User Info & Logout -->
+        <div class="flex items-center gap-2.5">
+          <!-- Reportes y Respaldo (Admin / Logística) -->
+          <div id="adminReportsGroup" class="hidden items-center gap-1.5">
+            <a href="/api/reports/export-csv" download
+              class="bg-brand-800 hover:bg-brand-700 text-brand-100 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl border border-brand-700 transition flex items-center gap-1 shadow-sm" title="Descargar Reporte en Excel">
+              <i class="fa-solid fa-file-excel text-emerald-400"></i>
+              <span class="hidden md:inline">Reporte Excel</span>
+            </a>
+            <a href="/api/backup" download
+              class="bg-brand-800 hover:bg-brand-700 text-brand-100 hover:text-white text-xs font-bold px-2.5 py-1.5 rounded-xl border border-brand-700 transition flex items-center gap-1 shadow-sm" title="Descargar Copia de Seguridad JSON">
+              <i class="fa-solid fa-database text-sky-400"></i>
+              <span class="hidden md:inline">Respaldo BD</span>
+            </a>
+          </div>
+
+          <div class="text-right hidden sm:block">
+            <p id="userName" class="text-xs font-bold text-white leading-tight"></p>
+            <span id="userBadge" class="inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-brand-800 text-brand-200 border border-brand-700"></span>
+          </div>
+          <button onclick="logout()" title="Cerrar Sesión"
+            class="bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+            <i class="fa-solid fa-power-off"></i>
+            <span class="hidden sm:inline">Salir</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs by Role -->
+      <nav id="roleTabs" class="bg-brand-950/70 border-t border-brand-800/60 px-4 sm:px-6 flex overflow-x-auto text-xs no-scrollbar space-x-1"></nav>
+    </header>
+
+    <!-- CONTENT WRAPPER -->
+    <main class="max-w-7xl mx-auto w-full p-4 sm:p-6 space-y-6 flex-1 no-print">
+
+      <!-- KPI METRICS BAR (Admin & Logística) -->
+      <div id="kpiBar" class="hidden grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-boxes-packing"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pendiente Bodega</p>
+            <h3 id="kpi_bodega" class="text-2xl font-black text-slate-800">0</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Por Facturar</p>
+            <h3 id="kpi_factura" class="text-2xl font-black text-slate-800">0</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-truck-arrow-right"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">En Ruta Activa</p>
+            <h3 id="kpi_ruta" class="text-2xl font-black text-slate-800">0</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl shrink-0">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div>
+            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Entregados</p>
+            <h3 id="kpi_entregado" class="text-2xl font-black text-slate-800">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- TAB: CONDUCTOR (HOJA DE PICKING & ENTREGAS EN LA WEB)   -->
+      <!-- ======================================================== -->
+      <section id="tab-conductor" class="tab-content hidden space-y-6">
+        <!-- Top bar for driver module -->
+        <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-truck-moving text-brand-600"></i> Panel de Despacho del Conductor
+            </h2>
+            <p class="text-xs text-slate-500 font-medium">Verifica y confirma la carga (Hoja de Picking) e inicia las entregas en la web.</p>
+          </div>
+
+          <!-- Driver selector if admin or logistics viewing -->
+          <div class="flex items-center gap-2 w-full md:w-auto">
+            <label class="text-xs font-bold text-slate-500 shrink-0">Filtrar Conductor:</label>
+            <select id="conductorFilter" onchange="renderConductor()"
+              class="border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none w-full md:w-56">
+              <option value="ALL">-- Ver Todos --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Dynamic Container for Driver Routes -->
+        <div id="conductorList" class="space-y-6"></div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB: ADMIN - GESTIÓN DE PERSONAL (CONDUCTORES Y VENDEDORES) -->
+      <!-- ======================================================== -->
+      <section id="tab-admin-usuarios" class="tab-content hidden space-y-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-users-gear text-brand-600"></i> Gestión de Personal: Conductores & Vendedores
+            </h2>
+            <p class="text-xs text-slate-500 font-medium">Administra choferes, vendedores y personal operativo con acceso al sistema.</p>
+          </div>
+          <button onclick="openUserModal()"
+            class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-brand-600/20 flex items-center gap-2 transition transform active:scale-95">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Nuevo Conductor o Vendedor</span>
+          </button>
+        </div>
+
+        <!-- Filter tabs for users -->
+        <div class="flex gap-2 border-b border-slate-200 pb-2">
+          <button onclick="filterUsers('ALL', this)" class="user-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-800 text-white">Todos (<span id="count_all_users">0</span>)</button>
+          <button onclick="filterUsers('conductor', this)" class="user-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">Conductores (<span id="count_drivers">0</span>)</button>
+          <button onclick="filterUsers('vendedor', this)" class="user-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">Vendedores (<span id="count_sellers">0</span>)</button>
+          <button onclick="filterUsers('otros', this)" class="user-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200">Otros Roles</button>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                <tr>
+                  <th class="p-3.5">Personal / Nombre</th>
+                  <th class="p-3.5">Usuario</th>
+                  <th class="p-3.5">Rol</th>
+                  <th class="p-3.5">Teléfono</th>
+                  <th class="p-3.5">Vehículo / Placa (Chofer)</th>
+                  <th class="p-3.5 text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB: LOGÍSTICA & ARMADO DE RUTAS                        -->
+      <!-- ======================================================== -->
+      <section id="tab-logistica" class="tab-content hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Columna Izquierda: Facturas listas para armar ruta -->
+          <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+            <div class="flex justify-between items-center">
+              <div>
+                <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+                  <i class="fa-solid fa-route text-brand-600"></i> Planificación y Despacho de Rutas
+                </h2>
+                <p class="text-xs text-slate-500">Selecciona los pedidos facturados y asígnalos a un chofer para generar su Hoja de Picking.</p>
+              </div>
+            </div>
+
+            <!-- Selector de conductor y botón de despacho -->
+            <div class="bg-brand-50/70 p-4 rounded-xl border border-brand-100 flex flex-col sm:flex-row gap-3 items-center">
+              <div class="w-full sm:flex-1">
+                <label class="block text-[11px] font-bold text-brand-900 mb-1">Conductor Asignado:</label>
+                <select id="l_driver_select" class="w-full border border-brand-300 rounded-xl p-2.5 text-xs font-bold bg-white text-slate-800 focus:ring-2 focus:ring-brand-500 outline-none">
+                  <option value="">-- Seleccionar Conductor --</option>
+                </select>
+              </div>
+              <button onclick="saveRoute()"
+                class="w-full sm:w-auto mt-auto bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs px-6 py-3 rounded-xl shadow-md shadow-brand-600/20 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-clipboard-check"></i>
+                <span>Generar Ruta & Hoja de Picking</span>
+              </button>
+            </div>
+
+            <div class="space-y-3">
+              <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-file-invoice text-brand-600"></i> Facturas Listas para Ruta (<span id="count_ready_orders">0</span>)
+              </h3>
+              <div id="logisticaList" class="space-y-2.5"></div>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Paradas extras y recolecciones -->
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+            <div>
+              <h3 class="font-black text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+                <i class="fa-solid fa-boxes-packing text-amber-600"></i> Añadir Parada Extra
+              </h3>
+              <p class="text-xs text-slate-500 mt-1">Inserta una parada de recolección en proveedor o bodega intermedia a una ruta ya activa.</p>
+            </div>
+
+            <form onsubmit="addExtraStop(event)" class="space-y-3">
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Ruta Asignada:</label>
+                <select id="ex_route_id" required class="w-full border border-slate-300 p-2 rounded-xl text-xs bg-slate-50"></select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Punto / Proveedor:</label>
+                <input id="ex_title" placeholder="Ej: Bodega Central de Envases" required class="w-full border border-slate-300 p-2 rounded-xl text-xs">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Dirección Exacta:</label>
+                <input id="ex_address" placeholder="Ej: Km 7 Carretera Norte" required class="w-full border border-slate-300 p-2 rounded-xl text-xs">
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Instrucciones / Mercadería a Recoger:</label>
+                <textarea id="ex_details" placeholder="Ej: Recoger 50 galones vacíos con factura adjunta" required class="w-full border border-slate-300 p-2 rounded-xl text-xs h-16"></textarea>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 mb-1">Orden de Secuencia (#):</label>
+                <input id="ex_sequence" type="number" min="1" value="1" required class="w-full border border-slate-300 p-2 rounded-xl text-xs font-bold text-center">
+              </div>
+              <button type="submit"
+                class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-plus-circle"></i> Insertar en Hoja de Ruta
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB: VENDEDOR (EMISIÓN DE PEDIDOS / PROFORMAS)          -->
+      <!-- ======================================================== -->
+      <section id="tab-vendedor" class="tab-content hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-4xl mx-auto space-y-5">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-cart-shopping text-brand-600"></i> Emisión de Documento Comercial
+            </h2>
+            <p class="text-xs text-slate-500">Crea proformas o facturas directas que ingresarán a verificación de inventario en bodega.</p>
+          </div>
+
+          <form onsubmit="createOrder(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">N° de Documento</label>
+                <input id="v_num" placeholder="Ej: PROF-2026-088 o FAC-1002" required
+                  class="w-full border border-slate-300 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tipo de Documento</label>
+                <select id="v_type" class="w-full border border-slate-300 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+                  <option value="PROFORMA">Proforma Comercial (Revisión bodega + Facturación final)</option>
+                  <option value="FACTURA">Factura Directa (Revisión bodega + Directo a ruta)</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Cliente (Código o Nombre)</label>
+              <input id="v_client_search" list="dl_clients" placeholder="Escribe para buscar cliente del catálogo..." required
+                class="w-full border border-slate-300 p-2.5 rounded-xl text-xs bg-slate-50 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+            </div>
+
+            <!-- Items Picker -->
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <label class="block text-xs font-bold text-slate-800">Agregar Ítems al Detalle:</label>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input id="v_prod_input" list="dl_products" placeholder="Buscar producto por código o descripción..."
+                  class="flex-1 border border-slate-300 p-2.5 rounded-xl text-xs bg-white">
+                <div class="flex gap-2">
+                  <input id="v_prod_qty" type="number" min="1" value="1"
+                    class="w-20 border border-slate-300 p-2.5 rounded-xl text-xs text-center font-bold bg-white">
+                  <button type="button" onclick="addSelectedProduct()"
+                    class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition whitespace-nowrap">
+                    <i class="fa-solid fa-plus mr-1"></i> Añadir Ítem
+                  </button>
+                </div>
+              </div>
+
+              <!-- Items Table -->
+              <div class="overflow-x-auto bg-white rounded-xl border border-slate-200">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                    <tr>
+                      <th class="p-2.5">Código</th>
+                      <th class="p-2.5">Producto</th>
+                      <th class="p-2.5 text-right">Precio Unit.</th>
+                      <th class="p-2.5 text-center">Cant.</th>
+                      <th class="p-2.5 text-right">Subtotal</th>
+                      <th class="p-2.5 text-center">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="v_items_tbody" class="divide-y divide-slate-100">
+                    <tr><td colspan="6" class="p-4 text-center text-slate-400">Sin ítems seleccionados.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="text-right text-base font-black text-brand-900 pt-1">
+                Total Estimado: $<span id="v_grand_total">0.00</span>
+              </div>
+            </div>
+
+            <button type="submit"
+              class="w-full py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i>
+              <span>Enviar Pedido a Revisión Física en Bodega</span>
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB: BODEGUERO (VERIFICACIÓN FÍSICA)                    -->
+      <!-- ======================================================== -->
+      <section id="tab-bodeguero" class="tab-content hidden space-y-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-warehouse text-brand-600"></i> Verificación Física Obligatoria en Bodega
+            </h2>
+            <p class="text-xs text-slate-500">Comprueba existencia de producto en anaquel y autoriza el despacho.</p>
+          </div>
+          <input id="searchBodega" oninput="renderBodega()" placeholder="🔍 Buscar documento o cliente..."
+            class="w-full sm:w-64 border border-slate-300 p-2.5 rounded-xl text-xs bg-white shadow-sm">
+        </div>
+
+        <div id="bodegaList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB: FACTURADORA                                        -->
+      <!-- ======================================================== -->
+      <section id="tab-facturadora" class="tab-content hidden space-y-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 flex items-center gap-2">
+              <i class="fa-solid fa-file-invoice text-brand-600"></i> Facturación Definitiva de Proformas
+            </h2>
+            <p class="text-xs text-slate-500">Asigna el número de factura fiscal para habilitar la inclusión en ruta.</p>
+          </div>
+          <input id="searchFactura" oninput="renderFacturadora()" placeholder="🔍 Buscar proforma..."
+            class="w-full sm:w-64 border border-slate-300 p-2.5 rounded-xl text-xs bg-white shadow-sm">
+        </div>
+
+        <div id="facturadoraList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB: CLIENTES (CRUD)                                    -->
+      <!-- ======================================================== -->
+      <section id="tab-clientes" class="tab-content hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h3 class="font-black text-slate-900 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-user-plus text-brand-600"></i> Registrar Cliente
+            </h3>
+            <form onsubmit="saveClient(event)" class="space-y-3">
+              <input id="c_code" placeholder="Código (ej: CLI-005)" required class="w-full border p-2.5 rounded-xl text-xs">
+              <input id="c_name" placeholder="Nombre Comercial" required class="w-full border p-2.5 rounded-xl text-xs">
+              <input id="c_address" placeholder="Dirección de Entrega" required class="w-full border p-2.5 rounded-xl text-xs">
+              <input id="c_phone" placeholder="Teléfono de Contacto" class="w-full border p-2.5 rounded-xl text-xs">
+              <div class="grid grid-cols-2 gap-2">
+                <input id="c_lat" placeholder="Latitud GPS" class="w-full border p-2.5 rounded-xl text-xs">
+                <input id="c_lng" placeholder="Longitud GPS" class="w-full border p-2.5 rounded-xl text-xs">
+              </div>
+              <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-sm">
+                Guardar Cliente
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center">
+              <h3 class="font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-address-book text-brand-600"></i> Directorio de Clientes
+              </h3>
+              <input id="searchClientTable" oninput="renderClients()" placeholder="🔍 Buscar cliente..."
+                class="border p-2 rounded-xl text-xs w-48 bg-slate-50">
+            </div>
+            <div id="clientsTable" class="overflow-x-auto max-h-96"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ======================================================== -->
+      <!-- TAB: PRODUCTOS (CRUD)                                   -->
+      <!-- ======================================================== -->
+      <section id="tab-productos" class="tab-content hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+            <h3 class="font-black text-slate-900 mb-3 flex items-center gap-2">
+              <i class="fa-solid fa-box-open text-brand-600"></i> Registrar Producto
+            </h3>
+            <form onsubmit="saveProduct(event)" class="space-y-3">
+              <input id="p_code" placeholder="Código (ej: PROD-006)" required class="w-full border p-2.5 rounded-xl text-xs">
+              <input id="p_name" placeholder="Nombre / Descripción" required class="w-full border p-2.5 rounded-xl text-xs">
+              <div class="grid grid-cols-2 gap-2">
+                <input id="p_price" type="number" step="0.01" placeholder="Precio ($)" required class="w-full border p-2.5 rounded-xl text-xs">
+                <input id="p_stock" type="number" placeholder="Stock Inicial" class="w-full border p-2.5 rounded-xl text-xs">
+              </div>
+              <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-sm">
+                Guardar Producto
+              </button>
+            </form>
+          </div>
+
+          <div class="lg:col-span-2 bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center">
+              <h3 class="font-black text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-cubes text-brand-600"></i> Catálogo de Inventario
+              </h3>
+              <input id="searchProductTable" oninput="renderProducts()" placeholder="🔍 Buscar producto..."
+                class="border p-2 rounded-xl text-xs w-48 bg-slate-50">
+            </div>
+            <div id="productsTable" class="overflow-x-auto max-h-96"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CREAR / EDITAR USUARIO (CONDUCTOR / VENDEDOR)    -->
+  <!-- ======================================================== -->
+  <div id="userModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-5 border border-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 id="userModalTitle" class="font-black text-lg text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-user-plus text-brand-600"></i> Registrar Personal
+        </h3>
+        <button onclick="closeUserModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleSaveUser(event)" class="space-y-3.5">
+        <input type="hidden" id="modalUserId">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Nombre Completo</label>
+          <input id="modalUserName" placeholder="Ej: Juan Martínez o Carlos Gómez" required
+            class="w-full border border-slate-300 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Usuario (Login)</label>
+            <input id="modalUserLogin" placeholder="Ej: jmartinez" required
+              class="w-full border border-slate-300 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Contraseña</label>
+            <input id="modalUserPass" type="text" placeholder="Ej: Clave#2026*" required
+              class="w-full border border-slate-300 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Rol en el Sistema</label>
+          <select id="modalUserRole" onchange="toggleVehicleField()" required
+            class="w-full border border-slate-300 p-2.5 rounded-xl text-xs font-bold focus:ring-2 focus:ring-brand-500 outline-none bg-slate-50">
+            <option value="conductor">Conductor (Chofer de Despacho)</option>
+            <option value="vendedor">Vendedor (Emisión de Pedidos)</option>
+            <option value="logistica">Logística (Armado de Rutas)</option>
+            <option value="bodeguero">Bodeguero (Revisión Física)</option>
+            <option value="facturadora">Facturadora (Emisión Fiscal)</option>
+            <option value="admin">Administrador General</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">Teléfono de Contacto</label>
+          <input id="modalUserPhone" placeholder="Ej: +505 8899-1122"
+            class="w-full border border-slate-300 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+        </div>
+
+        <div id="modalVehicleGroup">
+          <label class="block text-xs font-bold text-brand-900 mb-1">
+            <i class="fa-solid fa-truck text-brand-600 mr-1"></i> Vehículo Asignado / Placa
+          </label>
+          <input id="modalUserVehicle" placeholder="Ej: Camión Hino 3.5T - Placa M-32091"
+            class="w-full border border-brand-300 bg-brand-50/50 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 outline-none">
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeUserModal()"
+            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+            Cancelar
+          </button>
+          <button type="submit"
+            class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-md transition">
+            Guardar Usuario
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: REGISTRAR ENTREGA CON NOTAS DEL CONDUCTOR        -->
+  <!-- ======================================================== -->
+  <div id="deliveryModal" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <div>
+          <span class="text-[10px] uppercase font-bold tracking-wider text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">Confirmación de Parada</span>
+          <h3 id="delivModalClient" class="font-black text-lg text-slate-900 mt-1">Entrega a Cliente</h3>
+        </div>
+        <button onclick="closeDeliveryModal()" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleConfirmDelivery(event)" class="space-y-3.5">
+        <input type="hidden" id="delivRouteId">
+        <input type="hidden" id="delivStopId">
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Estado de la Entrega:</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="border border-emerald-300 bg-emerald-50/60 rounded-xl p-2.5 text-center cursor-pointer flex flex-col items-center gap-1 hover:bg-emerald-100 transition">
+              <input type="radio" name="delivStatus" value="ENTREGADO" checked class="accent-emerald-600">
+              <span class="text-xs font-bold text-emerald-800">Conforme</span>
+            </label>
+            <label class="border border-amber-300 bg-amber-50/60 rounded-xl p-2.5 text-center cursor-pointer flex flex-col items-center gap-1 hover:bg-amber-100 transition">
+              <input type="radio" name="delivStatus" value="INCIDENCIA" class="accent-amber-600">
+              <span class="text-xs font-bold text-amber-800">Con Incidencia</span>
+            </label>
+            <label class="border border-rose-300 bg-rose-50/60 rounded-xl p-2.5 text-center cursor-pointer flex flex-col items-center gap-1 hover:bg-rose-100 transition">
+              <input type="radio" name="delivStatus" value="NO_ENTREGADO" class="accent-rose-600">
+              <span class="text-xs font-bold text-rose-800">No Entregado</span>
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">
+            <i class="fa-solid fa-pen-to-square text-brand-600 mr-1"></i> Notas del Conductor al Entregar:
+          </label>
+          <textarea id="delivNotes" placeholder="Escribe observaciones aquí... Ej: 'Recibió vigilante Carlos en portón 2 con sello', 'Cliente pagó mitad en efectivo y mitad transferencia', 'Se entregó con caja ligeramente aplastada', etc."
+            class="w-full border border-slate-300 p-3 rounded-xl text-xs h-28 focus:ring-2 focus:ring-brand-500 outline-none leading-relaxed"></textarea>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeDeliveryModal()"
+            class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition">
+            Volver
+          </button>
+          <button type="submit"
+            class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl text-xs shadow-md transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-check"></i>
+            <span>Confirmar Entrega</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: HOJA DE PICKING & MANIFIESTO IMPRIMIBLE OFICIAL  -->
+  <!-- ======================================================== -->
+  <div id="printModal" class="hidden fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 space-y-6">
+      <!-- Toolbar (Only screen) -->
+      <div class="flex justify-between items-center no-print border-b border-slate-200 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="bg-brand-100 text-brand-900 font-extrabold text-xs px-3 py-1 rounded-full flex items-center gap-1">
+            <i class="fa-solid fa-file-lines"></i> Hoja Oficial de Picking & Despacho
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="window.print()" class="bg-brand-600 text-white font-bold text-xs px-4 py-2 rounded-xl hover:bg-brand-700 shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-print"></i> Imprimir Hoja
+          </button>
+          <button onclick="closePrintModal()" class="bg-slate-200 text-slate-700 font-bold text-xs px-3 py-2 rounded-xl hover:bg-slate-300">
+            Cerrar
+          </button>
+        </div>
+      </div>
+
+      <!-- Printable Document -->
+      <div id="printableReport" class="p-4 bg-white text-slate-900 text-xs space-y-6">
+        <!-- Header -->
+        <div class="flex justify-between items-start border-b-2 border-brand-800 pb-4">
+          <div>
+            <h1 class="text-2xl font-black text-brand-900 uppercase tracking-tight">EcoLogística Express S.A.</h1>
+            <p class="font-bold text-slate-600">HOJA DE PICKING CONSOLIDADA & MANIFIESTO DE RUTA</p>
+            <p class="text-[11px] text-slate-500">Sistema Automatizado WMS / Despacho Inmediato</p>
+          </div>
+          <div class="text-right">
+            <div class="bg-brand-50 border border-brand-200 px-3 py-1.5 rounded-lg inline-block text-right">
+              <p class="font-black text-sm text-brand-900" id="rep_route_id">Ruta #00</p>
+              <p id="rep_date" class="text-[10px] text-slate-500"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Route & Driver Information -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+          <div>
+            <p><b>Conductor / Chofer:</b> <span id="rep_driver" class="font-bold text-slate-900"></span></p>
+            <p><b>Vehículo / Placa:</b> <span id="rep_vehicle" class="font-bold text-slate-700"></span></p>
+            <p><b>Estado de Carga:</b> <span id="rep_picking_status" class="font-bold text-brand-700"></span></p>
+          </div>
+          <div>
+            <p><b>Total Paradas en Ruta:</b> <span id="rep_total_orders" class="font-bold text-slate-900"></span></p>
+            <p><b>Aprobación en Bodega:</b> <span class="text-emerald-700 font-bold">Verificado 100%</span></p>
+            <p><b>Generado el:</b> <span id="rep_generated_at" class="text-slate-600"></span></p>
+          </div>
+        </div>
+
+        <!-- CONSOLIDATED PICKING LIST -->
+        <div>
+          <div class="bg-brand-900 text-white px-3 py-1.5 rounded-t-lg flex justify-between items-center">
+            <h3 class="font-bold text-xs uppercase tracking-wider">1. Hoja de Picking: Resumen Consolidado de Carga para el Camión</h3>
+            <span class="text-[11px] font-medium text-brand-200">Revisión antes de salida</span>
+          </div>
+          <table class="w-full border-collapse border border-slate-300 text-left text-xs">
+            <thead class="bg-slate-100 font-bold text-slate-700">
+              <tr>
+                <th class="border border-slate-300 p-2 text-center w-12">Check</th>
+                <th class="border border-slate-300 p-2">Código</th>
+                <th class="border border-slate-300 p-2">Descripción del Producto</th>
+                <th class="border border-slate-300 p-2 text-center">Cantidad Total a Subir</th>
+                <th class="border border-slate-300 p-2 text-center">Estado Verificación</th>
+              </tr>
+            </thead>
+            <tbody id="rep_summary_table"></tbody>
+          </table>
+        </div>
+
+        <!-- DETAILED STOPS & ORDERS -->
+        <div>
+          <div class="bg-slate-800 text-white px-3 py-1.5 rounded-t-lg flex justify-between items-center">
+            <h3 class="font-bold text-xs uppercase tracking-wider">2. Hoja de Ruta: Secuencia de Paradas, Clientes y Mercadería</h3>
+            <span class="text-[11px] font-medium text-slate-300">Orden de Entrega</span>
+          </div>
+          <table class="w-full border-collapse border border-slate-300 text-left text-xs">
+            <thead class="bg-slate-100 font-bold text-slate-700">
+              <tr>
+                <th class="border border-slate-300 p-2 text-center w-12">#</th>
+                <th class="border border-slate-300 p-2">Tipo</th>
+                <th class="border border-slate-300 p-2">Cliente / Destino / Teléfono</th>
+                <th class="border border-slate-300 p-2">Detalle de Mercadería a Entregar</th>
+                <th class="border border-slate-300 p-2 text-center">Notas / Estatus</th>
+              </tr>
+            </thead>
+            <tbody id="rep_detail_table"></tbody>
+          </table>
+        </div>
+
+        <!-- SIGNATURES -->
+        <div class="pt-12 grid grid-cols-3 gap-8 text-center text-xs">
+          <div class="border-t border-slate-400 pt-2">
+            <p class="font-bold text-slate-900">Despacho / Bodega</p>
+            <p class="text-[10px] text-slate-500">Firma y Sello de Salida</p>
+          </div>
+          <div class="border-t border-slate-400 pt-2">
+            <p class="font-bold text-slate-900">Conductor / Chofer</p>
+            <p class="text-[10px] text-slate-500">Firma de Carga Conforme</p>
+          </div>
+          <div class="border-t border-slate-400 pt-2">
+            <p class="font-bold text-slate-900">Recepción / Cliente</p>
+            <p class="text-[10px] text-slate-500">Firma de Entrega en Destino</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT APP LOGIC                                    -->
+  <!-- ======================================================== -->
+  <script>
+    let currentUser = null;
+    let globalClients = [];
+    let globalProducts = [];
+    let globalOrders = [];
+    let globalRoutes = [];
+    let globalUsers = [];
+    let currentProformaItems = [];
+    let userFilterSelected = 'ALL';
+    let pollInterval = null;
+
+    // Toast helper
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const colors = {
+        success: 'bg-brand-700 text-white border-brand-500',
+        error: 'bg-rose-700 text-white border-rose-500',
+        info: 'bg-slate-800 text-white border-slate-600'
+      };
+      const icons = {
+        success: 'fa-circle-check',
+        error: 'fa-triangle-exclamation',
+        info: 'fa-circle-info'
+      };
+
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold transform transition-all duration-300 opacity-0 translate-y-2 ${colors[type] || colors.info}`;
+      toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-sm"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // ==========================================
+    // LOGIN & SESIÓN
+    // ==========================================
+    async function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value.trim();
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, password: p })
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          currentUser = data.user;
+          document.getElementById('loginScreen').classList.add('hidden');
+          document.getElementById('appScreen').classList.remove('hidden');
+          document.getElementById('userName').innerText = currentUser.name;
+          document.getElementById('userBadge').innerText = currentUser.role.toUpperCase();
+
+          setupNavigation();
+          await loadAllData();
+
+          if (pollInterval) clearInterval(pollInterval);
+          pollInterval = setInterval(loadAllData, 4000);
+
+          showToast(`¡Bienvenido al sistema, ${currentUser.name}!`, 'success');
+        } else {
+          showToast(data.message || 'Credenciales incorrectas', 'error');
+        }
+      } catch (err) {
+        showToast('Error de conexión con el servidor', 'error');
+      }
+    }
+
+    function logout() {
+      if (pollInterval) clearInterval(pollInterval);
+      currentUser = null;
+      document.getElementById('appScreen').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+      showToast('Sesión cerrada con éxito', 'info');
+    }
+
+    function setupNavigation() {
+      const nav = document.getElementById('roleTabs');
+      nav.innerHTML = '';
+
+      const roleMap = {
+        conductor: [
+          { id: 'conductor', label: 'Mis Rutas & Picking', icon: 'fa-truck-fast' }
+        ],
+        vendedor: [
+          { id: 'vendedor', label: 'Emitir Pedido', icon: 'fa-cart-plus' },
+          { id: 'clientes', label: 'Clientes', icon: 'fa-users' },
+          { id: 'productos', label: 'Productos', icon: 'fa-box' }
+        ],
+        bodeguero: [
+          { id: 'bodeguero', label: 'Verificación Bodega', icon: 'fa-boxes-packing' },
+          { id: 'productos', label: 'Inventario', icon: 'fa-box' }
+        ],
+        facturadora: [
+          { id: 'facturadora', label: 'Facturación Fiscal', icon: 'fa-file-invoice-dollar' },
+          { id: 'clientes', label: 'Clientes', icon: 'fa-users' }
+        ],
+        logistica: [
+          { id: 'logistica', label: 'Rutas & Despacho', icon: 'fa-route' },
+          { id: 'conductor', label: 'Monitoreo de Choferes', icon: 'fa-truck-fast' },
+          { id: 'clientes', label: 'Clientes GPS', icon: 'fa-map-location-dot' }
+        ],
+        admin: [
+          { id: 'conductor', label: 'Conductores & Picking', icon: 'fa-truck-fast' },
+          { id: 'admin-usuarios', label: 'Personal & Usuarios', icon: 'fa-users-gear' },
+          { id: 'logistica', label: 'Logística de Rutas', icon: 'fa-route' },
+          { id: 'vendedor', label: 'Ventas', icon: 'fa-cart-plus' },
+          { id: 'bodeguero', label: 'Bodega (Revisión)', icon: 'fa-warehouse' },
+          { id: 'facturadora', label: 'Facturación', icon: 'fa-file-invoice' },
+          { id: 'clientes', label: 'Clientes', icon: 'fa-users' },
+          { id: 'productos', label: 'Productos', icon: 'fa-box' }
+        ]
+      };
+
+      const tabs = roleMap[currentUser.role] || roleMap.vendedor;
+      tabs.forEach((tab, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `px-3.5 py-2.5 font-bold text-brand-200 hover:text-white hover:bg-brand-800/80 rounded-lg transition flex items-center gap-2 whitespace-nowrap ${idx === 0 ? 'bg-brand-800 text-white shadow-sm' : ''}`;
+        btn.innerHTML = `<i class="fa-solid ${tab.icon}"></i> <span>${tab.label}</span>`;
+        btn.onclick = () => switchTab(tab.id, btn);
+        nav.appendChild(btn);
+      });
+
+      if (tabs.length > 0) switchTab(tabs[0].id, nav.children[0]);
+
+      // KPIs exclusivos para Admin y Logística
+      const kpiBar = document.getElementById('kpiBar');
+      const reportsGroup = document.getElementById('adminReportsGroup');
+      if (currentUser.role === 'admin' || currentUser.role === 'logistica') {
+        kpiBar.classList.remove('hidden');
+        kpiBar.classList.add('grid');
+        if (reportsGroup) {
+          reportsGroup.classList.remove('hidden');
+          reportsGroup.classList.add('flex');
+        }
+      } else {
+        kpiBar.classList.add('hidden');
+        kpiBar.classList.remove('grid');
+        if (reportsGroup) {
+          reportsGroup.classList.add('hidden');
+          reportsGroup.classList.remove('flex');
+        }
+      }
+    }
+
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      const target = document.getElementById(`tab-${tabId}`);
+      if (target) target.classList.remove('hidden');
+
+      if (btn) {
+        document.querySelectorAll('#roleTabs button').forEach(b => {
+          b.classList.remove('bg-brand-800', 'text-white', 'shadow-sm');
+          b.classList.add('text-brand-200');
+        });
+        btn.classList.add('bg-brand-800', 'text-white', 'shadow-sm');
+        btn.classList.remove('text-brand-200');
+      }
+    }
+
+    // ==========================================
+    // CARGA DE DATOS & SINCRONIZACIÓN EN VIVO
+    // ==========================================
+    async function loadAllData() {
+      try {
+        const [resC, resP, resO, resR, resU] = await Promise.all([
+          fetch('/api/clients'),
+          fetch('/api/products'),
+          fetch('/api/orders'),
+          fetch('/api/routes'),
+          fetch('/api/users')
+        ]);
+
+        globalClients = await resC.json();
+        globalProducts = await resP.json();
+        globalOrders = await resO.json();
+        globalRoutes = await resR.json();
+        globalUsers = await resU.json();
+
+        updateDatalists();
+        updateDriversDropdowns();
+        if (currentUser.role === 'admin' || currentUser.role === 'logistica') updateKPIs();
+
+        renderConductor();
+        renderAdminUsers();
+        renderLogistica();
+        renderBodega();
+        renderFacturadora();
+        renderClients();
+        renderProducts();
+      } catch (e) {
+        console.error("Error sincronizando en tiempo real:", e);
+      }
+    }
+
+    function updateKPIs() {
+      document.getElementById('kpi_bodega').innerText = globalOrders.filter(o => o.status === 'PENDIENTE_BODEGA').length;
+      document.getElementById('kpi_factura').innerText = globalOrders.filter(o => o.status === 'PROFORMA_REVISADA').length;
+      document.getElementById('kpi_ruta').innerText = globalRoutes.filter(r => r.status === 'EN_RUTA').length;
+      document.getElementById('kpi_entregado').innerText = globalOrders.filter(o => o.status === 'ENTREGADO').length;
+    }
+
+    function updateDatalists() {
+      const dlC = document.getElementById('dl_clients');
+      dlC.innerHTML = globalClients.map(c => `<option value="${c.code} - ${c.name}">${c.address}</option>`).join('');
+
+      const dlP = document.getElementById('dl_products');
+      dlP.innerHTML = globalProducts.map(p => `<option value="${p.code} - ${p.name}">Precio: $${p.price.toFixed(2)} | Stock: ${p.stock || 0}</option>`).join('');
+    }
+
+    function updateDriversDropdowns() {
+      const drivers = globalUsers.filter(u => u.role === 'conductor');
+
+      // Dropdown de logística
+      const lSel = document.getElementById('l_driver_select');
+      const curL = lSel.value;
+      lSel.innerHTML = '<option value="">-- Seleccionar Conductor Asignado --</option>' +
+        drivers.map(d => `<option value="${d.name}">${d.name} ${d.vehicle ? `(${d.vehicle})` : ''}</option>`).join('');
+      if (curL) lSel.value = curL;
+
+      // Dropdown de filtro del conductor
+      const cSel = document.getElementById('conductorFilter');
+      const curC = cSel.value;
+      cSel.innerHTML = '<option value="ALL">-- Ver Todos los Conductores --</option>' +
+        drivers.map(d => `<option value="${d.name}">${d.name}</option>`).join('');
+      if (curC) cSel.value = curC;
+
+      // Dropdown para parada extra
+      const exSel = document.getElementById('ex_route_id');
+      const activeRoutes = globalRoutes.filter(r => r.status !== 'FINALIZADA');
+      exSel.innerHTML = activeRoutes.length === 0 ? '<option value="">Sin Rutas Disponibles</option>' :
+        activeRoutes.map(r => `<option value="${r.id}">Ruta #${r.id} - ${r.driver_name} (${r.status})</option>`).join('');
+    }
+
+    // =========================================================================
+    // CONDUCTOR & HOJA DE PICKING CONSOLIDADA EN LA WEB (REQUERIMIENTO PRINCIPAL)
+    // =========================================================================
+    function renderConductor() {
+      const filterDriver = document.getElementById('conductorFilter')?.value || 'ALL';
+      const div = document.getElementById('conductorList');
+
+      let routes = globalRoutes;
+
+      if (currentUser.role === 'conductor') {
+        routes = routes.filter(r => r.driver_name === currentUser.name);
+      } else if (filterDriver !== 'ALL') {
+        routes = routes.filter(r => r.driver_name === filterDriver);
+      }
+
+      if (routes.length === 0) {
+        div.innerHTML = `
+          <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center space-y-3">
+            <div class="w-16 h-16 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-2xl">
+              <i class="fa-solid fa-truck-ramp-box"></i>
+            </div>
+            <h3 class="font-bold text-slate-700">Sin rutas asignadas en este momento</h3>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto">Cuando Logística genere un despacho para este conductor, aparecerá aquí automáticamente con su Hoja de Picking consolidada.</p>
+          </div>
+        `;
+        return;
+      }
+
+      div.innerHTML = routes.map(r => {
+        // Cálculo del progreso de la Hoja de Picking
+        const pickingItems = r.picking_items || [];
+        const totalPickingCount = pickingItems.length;
+        const checkedPickingCount = pickingItems.filter(i => i.checked).length;
+        const pickingPercent = totalPickingCount > 0 ? Math.round((checkedPickingCount / totalPickingCount) * 100) : 0;
+        const isPickingReady = (totalPickingCount > 0 && checkedPickingCount === totalPickingCount) || r.picking_confirmed;
+
+        // Conteo de paradas de entrega
+        const totalStops = (r.stops || []).length;
+        const completedStops = (r.stops || []).filter(s => s.status && s.status !== 'PENDIENTE').length;
+
+        const isFinished = (r.status === 'FINALIZADA');
+        const isEnRuta = (r.status === 'EN_RUTA');
+
+        return `
+          <div class="bg-white rounded-3xl shadow-sm border border-slate-200/90 overflow-hidden space-y-0 transition-all">
+            <!-- Header de la Ruta -->
+            <div class="bg-gradient-to-r from-brand-900 to-brand-800 text-white p-4 sm:p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs uppercase font-extrabold px-2.5 py-1 rounded-full ${isFinished ? 'bg-slate-700 text-slate-300' : isEnRuta ? 'bg-brand-500 text-white' : 'bg-amber-400 text-amber-950'}">
+                    <i class="fa-solid ${isFinished ? 'fa-flag-checkered' : isEnRuta ? 'fa-truck-fast' : 'fa-clipboard-list'} mr-1"></i>
+                    ${r.status === 'ASIGNADA' ? 'ASIGNADA - REVISAR PICKING' : r.status}
+                  </span>
+                  <h3 class="font-black text-lg text-white tracking-tight">Ruta #${r.id}</h3>
+                </div>
+                <p class="text-xs text-brand-200 mt-1">
+                  <b>Conductor:</b> ${r.driver_name} ${r.vehicle ? `| <i class="fa-solid fa-truck text-[10px] ml-1"></i> ${r.vehicle}` : ''}
+                </p>
+              </div>
+
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <button onclick="openPrintModal('${r.id}')"
+                  class="flex-1 sm:flex-none bg-white/10 hover:bg-white/20 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition border border-white/20 flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-print"></i>
+                  <span>Imprimir Picking / Manifiesto</span>
+                </button>
+                ${(currentUser.role === 'admin' || currentUser.role === 'logistica') && !isFinished ? `
+                  <button onclick="cancelRoute('${r.id}')" title="Cancelar Ruta"
+                    class="bg-rose-500/80 hover:bg-rose-600 text-white text-xs px-3 py-2 rounded-xl transition">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+
+            <!-- CUERPO: 2 SECCIONES CLARAS (1. HOJA DE PICKING, 2. SECUENCIA DE ENTREGAS) -->
+            <div class="p-4 sm:p-6 space-y-6">
+
+              <!-- ========================================================= -->
+              <!-- SECCIÓN 1: HOJA DE PICKING CONSOLIDADA (CARGA DEL VEHÍCULO) -->
+              <!-- ========================================================= -->
+              <div class="rounded-2xl border ${r.picking_confirmed ? 'border-brand-200 bg-brand-50/30' : 'border-amber-200 bg-amber-50/30'} p-4 sm:p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b ${r.picking_confirmed ? 'border-brand-200' : 'border-amber-200'} pb-3">
+                  <div>
+                    <h4 class="font-black text-base text-slate-900 flex items-center gap-2">
+                      <i class="fa-solid fa-dolly ${r.picking_confirmed ? 'text-brand-600' : 'text-amber-600'}"></i>
+                      Hoja de Picking Consolidada (Carga Completa del Camión)
+                    </h4>
+                    <p class="text-xs text-slate-600">Total de productos acumulados de todos los clientes de esta ruta para subir al vehículo.</p>
+                  </div>
+
+                  <!-- Badge de estado de picking -->
+                  <div>
+                    ${r.picking_confirmed ? `
+                      <span class="bg-brand-600 text-white font-extrabold text-xs px-3 py-1.5 rounded-xl shadow-sm flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check"></i> Carga Verificada en el Camión
+                      </span>
+                    ` : `
+                      <span class="bg-amber-100 text-amber-900 font-extrabold text-xs px-3 py-1.5 rounded-xl border border-amber-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-clock"></i> Pendiente de Carga (${checkedPickingCount}/${totalPickingCount})
+                      </span>
+                    `}
+                  </div>
+                </div>
+
+                <!-- Barra de Progreso de Carga en la Web -->
+                <div>
+                  <div class="flex justify-between text-xs font-bold text-slate-700 mb-1.5">
+                    <span>Progreso de extracción y carga:</span>
+                    <span>${checkedPickingCount} de ${totalPickingCount} ítems (${pickingPercent}%)</span>
+                  </div>
+                  <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden shadow-inner">
+                    <div class="h-3 rounded-full transition-all duration-500 ${isPickingReady ? 'bg-brand-500' : 'bg-amber-500'}" style="width: ${pickingPercent}%"></div>
+                  </div>
+                </div>
+
+                <!-- Tabla Interactiva de Picking para Confirmar en la Web -->
+                <div class="overflow-x-auto bg-white rounded-xl border border-slate-200 shadow-sm">
+                  <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                      <tr>
+                        <th class="p-3 text-center w-14">Subido</th>
+                        <th class="p-3">Código</th>
+                        <th class="p-3">Producto a Cargar</th>
+                        <th class="p-3 text-center">Cantidad Total a Subir</th>
+                        <th class="p-3 text-center">Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                      ${pickingItems.length === 0 ? '<tr><td colspan="5" class="p-3 text-center text-slate-400">Sin ítems consolidados</td></tr>' :
+                        pickingItems.map(p => `
+                          <tr class="${p.checked ? 'bg-brand-50/50' : 'hover:bg-slate-50'} transition">
+                            <td class="p-3 text-center">
+                              <input type="checkbox" ${p.checked ? 'checked' : ''} ${r.picking_confirmed ? 'disabled' : ''}
+                                onchange="togglePickingCheck('${r.id}', '${p.product_code}', this.checked)"
+                                class="w-5 h-5 rounded accent-brand-600 cursor-pointer">
+                            </td>
+                            <td class="p-3 font-mono font-bold text-slate-800">${p.product_code}</td>
+                            <td class="p-3 font-semibold text-slate-800">${p.product_name}</td>
+                            <td class="p-3 text-center">
+                              <span class="inline-block bg-brand-100 text-brand-900 font-black text-xs px-2.5 py-1 rounded-lg">
+                                ${p.total_quantity} unidades
+                              </span>
+                            </td>
+                            <td class="p-3 text-center">
+                              ${p.checked ? 
+                                '<span class="text-brand-700 font-bold text-[11px]"><i class="fa-solid fa-check mr-1"></i>Verificado</span>' : 
+                                '<span class="text-slate-400 font-medium text-[11px]">Por subir</span>'}
+                            </td>
+                          </tr>
+                        `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- BOTÓN PRINCIPAL DE CONFIRMACIÓN DE CARGA / INICIO DE RUTA -->
+                ${!r.picking_confirmed ? `
+                  <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-1">
+                    <p class="text-xs text-slate-500">
+                      <i class="fa-solid fa-circle-info text-amber-500 mr-1"></i>
+                      Marca las casillas al subir cada producto a tu camión. Cuando esté todo listo, confirma la carga.
+                    </p>
+                    <button onclick="confirmRoutePicking('${r.id}')"
+                      class="w-full sm:w-auto bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs px-6 py-3 rounded-xl shadow-lg shadow-brand-600/30 transition transform active:scale-95 flex items-center justify-center gap-2">
+                      <i class="fa-solid fa-truck-fast"></i>
+                      <span>Confirmar Carga del Vehículo e Iniciar Ruta</span>
+                    </button>
+                  </div>
+                ` : `
+                  <div class="p-3 bg-brand-100/70 border border-brand-300 rounded-xl flex items-center justify-between text-xs text-brand-900">
+                    <span class="font-bold flex items-center gap-2">
+                      <i class="fa-solid fa-circle-check text-brand-600 text-sm"></i>
+                      Carga completa confirmada. La ruta está en curso. Procede a las entregas abajo.
+                    </span>
+                    <span class="text-[11px] font-semibold text-brand-700">Estado: EN_RUTA</span>
+                  </div>
+                `}
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- SECCIÓN 2: SECUENCIA DE PARADAS Y ENTREGAS CON NOTAS     -->
+              <!-- ========================================================= -->
+              <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                  <h4 class="font-black text-base text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-location-dot text-brand-600"></i>
+                    Secuencia de Entregas & Clientes (${completedStops} de ${totalStops} completadas)
+                  </h4>
+                  <span class="text-xs font-bold text-slate-500">Paradas ordenadas</span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4">
+                  ${(r.stops || []).map(s => {
+                    const order = s.order_id ? globalOrders.find(o => o.id === s.order_id) : null;
+                    const isPickup = s.type === 'PICKUP';
+                    const isDone = s.status && s.status !== 'PENDIENTE';
+                    const mapsQuery = s.lat && s.lng ? `${s.lat},${s.lng}` : encodeURIComponent(s.address);
+
+                    const statusBadges = {
+                      ENTREGADO: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                      INCIDENCIA: 'bg-amber-100 text-amber-800 border-amber-300',
+                      NO_ENTREGADO: 'bg-rose-100 text-rose-800 border-rose-300'
+                    };
+
+                    return `
+                      <div class="p-4 sm:p-5 rounded-2xl border transition-all ${isDone ? 'bg-slate-50 border-slate-200' : isPickup ? 'bg-amber-50/40 border-amber-300' : 'bg-white border-slate-200 shadow-sm hover:border-brand-300'}">
+                        
+                        <!-- Encabezado de la parada -->
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+                          <div class="flex items-center gap-2.5">
+                            <span class="w-7 h-7 rounded-full flex items-center justify-center font-black text-xs ${isDone ? 'bg-slate-300 text-slate-700' : isPickup ? 'bg-amber-600 text-white' : 'bg-brand-600 text-white'}">
+                              ${s.sequence}
+                            </span>
+                            <div>
+                              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md ${isPickup ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-brand-100 text-brand-900 border border-brand-200'}">
+                                ${isPickup ? 'Recolección Extra' : 'Entrega a Cliente'}
+                              </span>
+                              <h5 class="font-black text-slate-900 text-sm mt-0.5">${s.title}</h5>
+                            </div>
+                          </div>
+
+                          <!-- Estatus de la parada -->
+                          <div>
+                            ${isDone ? `
+                              <span class="text-xs font-black uppercase px-3 py-1 rounded-xl border flex items-center gap-1 ${statusBadges[s.status] || 'bg-slate-100'}">
+                                <i class="fa-solid ${s.status === 'ENTREGADO' ? 'fa-check' : s.status === 'INCIDENCIA' ? 'fa-exclamation' : 'fa-xmark'}"></i>
+                                ${s.status}
+                              </span>
+                            ` : `
+                              <span class="text-xs font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-xl">
+                                Pendiente de Entrega
+                              </span>
+                            `}
+                          </div>
+                        </div>
+
+                        <!-- Info de contacto y GPS -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-3 text-xs">
+                          <div class="md:col-span-2">
+                            <p class="text-slate-600">
+                              <i class="fa-solid fa-map-pin text-rose-500 mr-1.5"></i> <b>Dirección:</b> ${s.address}
+                            </p>
+                            ${s.phone ? `<p class="text-slate-600 mt-0.5"><i class="fa-solid fa-phone text-brand-600 mr-1.5"></i> <b>Teléfono:</b> ${s.phone}</p>` : ''}
+                            ${order && order.invoice_number ? `<p class="text-brand-800 font-bold mt-0.5"><i class="fa-solid fa-file-invoice mr-1.5"></i> Factura: ${order.invoice_number}</p>` : ''}
+                            ${isPickup && s.details ? `<p class="text-amber-800 font-semibold mt-1 bg-amber-100/60 p-2 rounded-lg border border-amber-200"><b>Instrucciones:</b> ${s.details}</p>` : ''}
+                          </div>
+
+                          <!-- Accesos GPS -->
+                          <div class="flex flex-row md:flex-col gap-2 justify-center">
+                            <a href="https://www.google.com/maps/search/?api=1&query=${mapsQuery}" target="_blank"
+                              class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold py-2 px-3 rounded-xl text-center transition flex items-center justify-center gap-1">
+                              <i class="fa-solid fa-location-arrow"></i> Google Maps
+                            </a>
+                            <a href="https://waze.com/ul?q=${mapsQuery}&navigate=yes" target="_blank"
+                              class="flex-1 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-bold py-2 px-3 rounded-xl text-center transition flex items-center justify-center gap-1">
+                              <i class="fa-brands fa-waze"></i> Waze GPS
+                            </a>
+                          </div>
+                        </div>
+
+                        <!-- Detalle de productos de este pedido -->
+                        ${order && order.items ? `
+                          <div class="border-t border-slate-100 pt-2.5">
+                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Carga para este cliente:</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              ${order.items.map(it => `
+                                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                                  <span class="font-medium text-slate-800">${it.product_name}</span>
+                                  <span class="font-black text-brand-800 bg-brand-100/70 px-2 py-0.5 rounded text-[11px]">${it.quantity} uds</span>
+                                </div>
+                              `).join('')}
+                            </div>
+                          </div>
+                        ` : ''}
+
+                        <!-- NOTAS REGISTRADAS POR EL CONDUCTOR (Si ya se entregó) -->
+                        ${s.notes ? `
+                          <div class="mt-3 p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-xs space-y-1">
+                            <div class="flex justify-between items-center text-amber-900 font-bold">
+                              <span><i class="fa-solid fa-comment-dots text-amber-600 mr-1"></i> Notas del Conductor:</span>
+                              ${s.completed_at ? `<span class="text-[10px] text-amber-700 font-normal">${new Date(s.completed_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>` : ''}
+                            </div>
+                            <p class="text-slate-700 italic font-medium">"${s.notes}"</p>
+                          </div>
+                        ` : ''}
+
+                        <!-- BOTÓN: REGISTRAR ENTREGA CON NOTAS -->
+                        ${!isDone ? `
+                          <div class="mt-4 pt-3 border-t border-slate-100">
+                            <button onclick="openDeliveryModal('${r.id}', ${s.id}, '${s.title.replace(/'/g, "\\'")}')"
+                              class="w-full bg-brand-600 hover:bg-brand-700 text-white font-extrabold text-xs py-3 rounded-xl shadow-md shadow-brand-600/20 transition flex items-center justify-center gap-2">
+                              <i class="fa-solid fa-clipboard-check"></i>
+                              <span>Confirmar Entrega / Registrar Notas de Entrega</span>
+                            </button>
+                          </div>
+                        ` : ''}
+
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Check individual de producto en picking consolidado
+    async function togglePickingCheck(routeId, productCode, checked) {
+      try {
+        const res = await fetch(`/api/routes/${routeId}/picking-item`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_code: productCode, checked })
+        });
+        const data = await res.json();
+        if (data.success) {
+          // Actualización optimista local
+          const route = globalRoutes.find(r => r.id === routeId);
+          if (route && route.picking_items) {
+            const item = route.picking_items.find(i => i.product_code === productCode);
+            if (item) item.checked = checked;
+          }
+          renderConductor();
+        }
+      } catch (e) {
+        showToast('Error actualizando ítem de picking', 'error');
+      }
+    }
+
+    // Confirmación final de la carga e inicio de ruta
+    async function confirmRoutePicking(routeId) {
+      if (!confirm('¿Confirmas que toda la mercadería consolidada ha sido verificada y cargada en el camión?')) return;
+
+      try {
+        const res = await fetch(`/api/routes/${routeId}/confirm-picking`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('¡Carga verificada exitosamente! Ruta iniciada.', 'success');
+          loadAllData();
+        }
+      } catch (e) {
+        showToast('Error confirmando picking', 'error');
+      }
+    }
+
+    // Modal para registrar entrega y escribir notas del conductor
+    function openDeliveryModal(routeId, stopId, clientTitle) {
+      document.getElementById('delivRouteId').value = routeId;
+      document.getElementById('delivStopId').value = stopId;
+      document.getElementById('delivModalClient').innerText = clientTitle || 'Entrega de Pedido';
+      document.getElementById('delivNotes').value = '';
+      document.getElementById('deliveryModal').classList.remove('hidden');
+    }
+
+    function closeDeliveryModal() {
+      document.getElementById('deliveryModal').classList.add('hidden');
+    }
+
+    async function handleConfirmDelivery(e) {
+      e.preventDefault();
+      const routeId = document.getElementById('delivRouteId').value;
+      const stopId = document.getElementById('delivStopId').value;
+      const status = document.querySelector('input[name="delivStatus"]:checked').value;
+      const notes = document.getElementById('delivNotes').value.trim();
+
+      try {
+        const res = await fetch(`/api/routes/${routeId}/stop/${stopId}/deliver`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status, notes })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeDeliveryModal();
+          showToast(`Parada registrada como ${status}`, 'success');
+          loadAllData();
+        }
+      } catch (e) {
+        showToast('Error guardando entrega', 'error');
+      }
+    }
+
+    // =========================================================================
+    // GESTIÓN DE PERSONAL EN ADMIN (AGREGAR / ELIMINAR CONDUCTORES Y VENDEDORES)
+    // =========================================================================
+    function filterUsers(role, btn) {
+      userFilterSelected = role;
+      document.querySelectorAll('.user-filter-btn').forEach(b => {
+        b.classList.remove('bg-brand-800', 'text-white');
+        b.classList.add('bg-slate-100', 'text-slate-600');
+      });
+      if (btn) {
+        btn.classList.add('bg-brand-800', 'text-white');
+        btn.classList.remove('bg-slate-100', 'text-slate-600');
+      }
+      renderAdminUsers();
+    }
+
+    function renderAdminUsers() {
+      const tbody = document.getElementById('usersTableBody');
+      if (!tbody) return;
+
+      // Actualizar contadores
+      const totalDrivers = globalUsers.filter(u => u.role === 'conductor').length;
+      const totalSellers = globalUsers.filter(u => u.role === 'vendedor').length;
+      document.getElementById('count_all_users').innerText = globalUsers.length;
+      document.getElementById('count_drivers').innerText = totalDrivers;
+      document.getElementById('count_sellers').innerText = totalSellers;
+
+      let list = globalUsers;
+      if (userFilterSelected === 'conductor') {
+        list = list.filter(u => u.role === 'conductor');
+      } else if (userFilterSelected === 'vendedor') {
+        list = list.filter(u => u.role === 'vendedor');
+      } else if (userFilterSelected === 'otros') {
+        list = list.filter(u => u.role !== 'conductor' && u.role !== 'vendedor');
+      }
+
+      const roleBadges = {
+        conductor: 'bg-emerald-100 text-emerald-900 border-emerald-300',
+        vendedor: 'bg-blue-100 text-blue-900 border-blue-300',
+        admin: 'bg-purple-100 text-purple-900 border-purple-300',
+        bodeguero: 'bg-amber-100 text-amber-900 border-amber-300',
+        facturadora: 'bg-teal-100 text-teal-900 border-teal-300',
+        logistica: 'bg-indigo-100 text-indigo-900 border-indigo-300'
+      };
+
+      tbody.innerHTML = list.length === 0 ? '<tr><td colspan="6" class="p-6 text-center text-slate-400">No hay usuarios con este rol.</td></tr>' :
+        list.map(u => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-3.5">
+              <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs uppercase border border-slate-200">
+                  ${u.name.slice(0,2)}
+                </div>
+                <div>
+                  <p class="font-bold text-slate-900">${u.name}</p>
+                  <p class="text-[10px] text-slate-400">ID: #${u.id}</p>
+                </div>
+              </div>
+            </td>
+            <td class="p-3.5 font-mono text-slate-700">${u.username}</td>
+            <td class="p-3.5">
+              <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-md border ${roleBadges[u.role] || 'bg-slate-100'}">
+                ${u.role}
+              </span>
+            </td>
+            <td class="p-3.5 text-slate-600">${u.phone || '<span class="text-slate-300">-</span>'}</td>
+            <td class="p-3.5 text-slate-700 font-medium">
+              ${u.vehicle ? `<span class="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 text-[11px]"><i class="fa-solid fa-truck text-brand-600"></i> ${u.vehicle}</span>` : '<span class="text-slate-300">-</span>'}
+            </td>
+            <td class="p-3.5 text-center">
+              ${u.username !== 'admin' ? `
+                <button onclick="deleteUser(${u.id}, '${u.name.replace(/'/g, "\\'")}')" title="Eliminar Personal"
+                  class="bg-rose-50 hover:bg-rose-100 text-rose-600 p-2 rounded-xl border border-rose-200 transition">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              ` : `
+                <span class="text-[10px] font-bold text-slate-400 italic">Cuenta Principal</span>
+              `}
+            </td>
+          </tr>
+        `).join('');
+    }
+
+    function openUserModal() {
+      document.getElementById('modalUserId').value = '';
+      document.getElementById('modalUserName').value = '';
+      document.getElementById('modalUserLogin').value = '';
+      document.getElementById('modalUserPass').value = '';
+      document.getElementById('modalUserRole').value = 'conductor';
+      document.getElementById('modalUserPhone').value = '';
+      document.getElementById('modalUserVehicle').value = '';
+      document.getElementById('userModalTitle').innerText = 'Registrar Personal';
+      toggleVehicleField();
+      document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.add('hidden');
+    }
+
+    function toggleVehicleField() {
+      const role = document.getElementById('modalUserRole').value;
+      const group = document.getElementById('modalVehicleGroup');
+      if (role === 'conductor') {
+        group.classList.remove('hidden');
+      } else {
+        group.classList.add('hidden');
+      }
+    }
+
+    async function handleSaveUser(e) {
+      e.preventDefault();
+      const body = {
+        name: document.getElementById('modalUserName').value.trim(),
+        username: document.getElementById('modalUserLogin').value.trim(),
+        password: document.getElementById('modalUserPass').value.trim(),
+        role: document.getElementById('modalUserRole').value,
+        phone: document.getElementById('modalUserPhone').value.trim(),
+        vehicle: document.getElementById('modalUserVehicle').value.trim()
+      };
+
+      try {
+        const res = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeUserModal();
+          showToast(`Usuario ${data.user.name} registrado con éxito`, 'success');
+          loadAllData();
+        } else {
+          showToast(data.message || 'Error guardando usuario', 'error');
+        }
+      } catch (err) {
+        showToast('Error de comunicación con el servidor', 'error');
+      }
+    }
+
+    async function deleteUser(id, userName) {
+      if (!confirm(`¿Estás seguro de eliminar a ${userName}? Ya no podrá ingresar al sistema ni recibir rutas.`)) return;
+
+      try {
+        const res = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Usuario ${userName} eliminado`, 'info');
+          loadAllData();
+        } else {
+          showToast(data.message || 'Error al eliminar', 'error');
+        }
+      } catch (e) {
+        showToast('Error de red', 'error');
+      }
+    }
+
+    // =========================================================================
+    // LOGÍSTICA & RUTAS
+    // =========================================================================
+    function renderLogistica() {
+      const div = document.getElementById('logisticaList');
+      if (!div) return;
+
+      const readyOrders = globalOrders.filter(o => o.status === 'FACTURA_LISTA_RUTA');
+      document.getElementById('count_ready_orders').innerText = readyOrders.length;
+
+      div.innerHTML = readyOrders.length === 0 ? `
+        <div class="p-6 bg-slate-50 border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
+          No hay facturas pendientes de asignar a ruta en este momento.
+        </div>
+      ` : readyOrders.map(o => `
+        <div class="flex items-center gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl border border-slate-200 transition">
+          <input type="checkbox" value="${o.id}" class="route-check w-5 h-5 accent-brand-600 rounded cursor-pointer">
+          <div class="flex-1">
+            <div class="flex items-center gap-2">
+              <span class="font-black text-brand-800 text-xs">Factura: ${o.invoice_number || 'N/A'}</span>
+              <span class="text-slate-800 font-bold text-xs">${o.client_name}</span>
+            </div>
+            <p class="text-[11px] text-slate-500">${o.address}</p>
+            <p class="text-[10px] text-brand-700 font-medium">${(o.items || []).map(i => `${i.quantity}x ${i.product_name}`).join(', ')}</p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="text-[10px] font-bold text-slate-500">Parada #:</span>
+            <input type="number" min="1" value="1" class="route-seq border border-slate-300 p-1.5 rounded-lg text-center w-14 font-black text-xs bg-white">
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function saveRoute() {
+      const driver = document.getElementById('l_driver_select').value;
+      const checks = document.querySelectorAll('.route-check:checked');
+
+      if (!driver) return showToast('Seleccione un conductor asignado', 'error');
+      if (checks.length === 0) return showToast('Seleccione al menos una factura para la ruta', 'error');
+
+      const stops = Array.from(checks).map(ch => {
+        const order = globalOrders.find(o => o.id === parseInt(ch.value));
+        const seq = ch.closest('div').querySelector('.route-seq').value;
+        return {
+          type: 'DELIVERY',
+          order_id: order.id,
+          title: order.client_name,
+          address: order.address,
+          phone: order.phone,
+          sequence: parseInt(seq),
+          lat: order.lat,
+          lng: order.lng
+        };
+      });
+
+      // Ordenar paradas por secuencia
+      stops.sort((a, b) => a.sequence - b.sequence);
+
+      try {
+        const res = await fetch('/api/routes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ driver_name: driver, stops })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`¡Ruta #${data.route.id} y Hoja de Picking creadas exitosamente!`, 'success');
+          loadAllData();
+        } else {
+          showToast(data.message || 'Error creando ruta', 'error');
+        }
+      } catch (e) {
+        showToast('Error de red', 'error');
+      }
+    }
+
+    async function cancelRoute(routeId) {
+      if (!confirm(`¿Deseas cancelar la Ruta #${routeId}? Los pedidos volverán a estar disponibles para otra ruta.`)) return;
+      try {
+        const res = await fetch(`/api/routes/${routeId}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Ruta #${routeId} cancelada`, 'info');
+          loadAllData();
+        }
+      } catch (e) {
+        showToast('Error de red', 'error');
+      }
+    }
+
+    async function addExtraStop(e) {
+      e.preventDefault();
+      const routeId = document.getElementById('ex_route_id').value;
+      if (!routeId) return showToast('Seleccione una ruta válida', 'error');
+
+      const body = {
+        title: document.getElementById('ex_title').value.trim(),
+        address: document.getElementById('ex_address').value.trim(),
+        details: document.getElementById('ex_details').value.trim(),
+        sequence: document.getElementById('ex_sequence').value
+      };
+
+      try {
+        const res = await fetch(`/api/routes/${routeId}/add-stop`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Parada Extra insertada en la ruta', 'success');
+          document.getElementById('ex_title').value = '';
+          document.getElementById('ex_address').value = '';
+          document.getElementById('ex_details').value = '';
+          loadAllData();
+        }
+      } catch (err) {
+        showToast('Error de conexión', 'error');
+      }
+    }
+
+    // =========================================================================
+    // VENDEDOR: CREACIÓN DE PEDIDOS / PROFORMAS
+    // =========================================================================
+    function addSelectedProduct() {
+      const val = document.getElementById('v_prod_input').value.trim();
+      const qty = parseInt(document.getElementById('v_prod_qty').value) || 1;
+      const prod = globalProducts.find(p => `${p.code} - ${p.name}` === val || p.code === val || p.name === val);
+
+      if (!prod) return showToast('Seleccione un producto válido del catálogo', 'error');
+
+      currentProformaItems.push({
+        product_code: prod.code,
+        product_name: prod.name,
+        price: prod.price,
+        quantity: qty,
+        subtotal: prod.price * qty
+      });
+
+      document.getElementById('v_prod_input').value = '';
+      document.getElementById('v_prod_qty').value = '1';
+      renderProformaTable();
+    }
+
+    function removeProformaItem(idx) {
+      currentProformaItems.splice(idx, 1);
+      renderProformaTable();
+    }
+
+    function renderProformaTable() {
+      const tbody = document.getElementById('v_items_tbody');
+      if (currentProformaItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Sin ítems seleccionados.</td></tr>';
+        document.getElementById('v_grand_total').innerText = '0.00';
+        return;
+      }
+
+      let total = 0;
+      tbody.innerHTML = currentProformaItems.map((item, idx) => {
+        total += item.subtotal;
+        return `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-mono font-bold text-slate-800">${item.product_code}</td>
+            <td class="p-2.5">${item.product_name}</td>
+            <td class="p-2.5 text-right font-mono">$${item.price.toFixed(2)}</td>
+            <td class="p-2.5 text-center font-black">${item.quantity}</td>
+            <td class="p-2.5 text-right font-black text-brand-900">$${item.subtotal.toFixed(2)}</td>
+            <td class="p-2.5 text-center">
+              <button type="button" onclick="removeProformaItem(${idx})" class="text-rose-500 hover:text-rose-700">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('v_grand_total').innerText = total.toFixed(2);
+    }
+
+    async function createOrder(e) {
+      e.preventDefault();
+      if (currentProformaItems.length === 0) return showToast('Agregue al menos un ítem al pedido', 'error');
+
+      const clientStr = document.getElementById('v_client_search').value.trim();
+      const client = globalClients.find(c => `${c.code} - ${c.name}` === clientStr || c.code === clientStr || c.name === clientStr);
+      if (!client) return showToast('Seleccione un cliente válido del catálogo', 'error');
+
+      const body = {
+        doc_number: document.getElementById('v_num').value.trim(),
+        doc_type: document.getElementById('v_type').value,
+        client_id: client.id,
+        items: currentProformaItems,
+        created_by: currentUser.name
+      };
+
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Documento enviado a revisión en bodega', 'success');
+          currentProformaItems = [];
+          document.getElementById('v_num').value = '';
+          document.getElementById('v_client_search').value = '';
+          renderProformaTable();
+          loadAllData();
+        }
+      } catch (err) {
+        showToast('Error enviando pedido', 'error');
+      }
+    }
+
+    // =========================================================================
+    // BODEGA
+    // =========================================================================
+    function renderBodega() {
+      const div = document.getElementById('bodegaList');
+      if (!div) return;
+      const search = (document.getElementById('searchBodega')?.value || '').toLowerCase();
+
+      let pending = globalOrders.filter(o => o.status === 'PENDIENTE_BODEGA');
+      if (search) {
+        pending = pending.filter(o =>
+          (o.proforma_number && o.proforma_number.toLowerCase().includes(search)) ||
+          (o.invoice_number && o.invoice_number.toLowerCase().includes(search)) ||
+          o.client_name.toLowerCase().includes(search)
+        );
+      }
+
+      div.innerHTML = pending.length === 0 ? '<p class="text-slate-400 col-span-2 text-center py-6">No hay órdenes pendientes de verificación en bodega.</p>' :
+        pending.map(o => `
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">${o.doc_type}</span>
+              <span class="text-xs text-slate-500 font-semibold">Emisor: ${o.created_by || 'Ventas'}</span>
+            </div>
+            <h3 class="font-black text-base text-slate-900">Doc: ${o.proforma_number || o.invoice_number}</h3>
+            <p class="text-xs font-bold text-slate-700">${o.client_name}</p>
+
+            <div class="space-y-1.5 bg-slate-50 p-3 rounded-xl border border-slate-100">
+              ${(o.items || []).map(i => `
+                <label class="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" ${i.checked_bodega ? 'checked' : ''}
+                    onchange="checkBodega(${o.id}, ${i.id}, this.checked)"
+                    class="w-4 h-4 rounded accent-brand-600">
+                  <span class="font-medium"><b>[${i.product_code}] ${i.quantity}x</b> ${i.product_name}</span>
+                </label>
+              `).join('')}
+            </div>
+
+            <button onclick="aprobarBodega(${o.id})"
+              class="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs py-2.5 rounded-xl transition shadow-sm flex items-center justify-center gap-1.5">
+              <i class="fa-solid fa-check-double"></i>
+              <span>Aprobar Inventario Físico Completo</span>
+            </button>
+          </div>
+        `).join('');
+    }
+
+    async function checkBodega(orderId, itemId, checked) {
+      await fetch(`/api/items/${orderId}/${itemId}/check-bodega`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checked })
+      });
+    }
+
+    async function aprobarBodega(id) {
+      const res = await fetch(`/api/orders/${id}/aprobar-bodega`, { method: 'PATCH' });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Inventario físico verificado y aprobado', 'success');
+        loadAllData();
+      }
+    }
+
+    // =========================================================================
+    // FACTURADORA
+    // =========================================================================
+    function renderFacturadora() {
+      const div = document.getElementById('facturadoraList');
+      if (!div) return;
+      const search = (document.getElementById('searchFactura')?.value || '').toLowerCase();
+
+      let pending = globalOrders.filter(o => o.status === 'PROFORMA_REVISADA');
+      if (search) {
+        pending = pending.filter(o =>
+          (o.proforma_number && o.proforma_number.toLowerCase().includes(search)) ||
+          o.client_name.toLowerCase().includes(search)
+        );
+      }
+
+      div.innerHTML = pending.length === 0 ? '<p class="text-slate-400 col-span-2 text-center py-6">Sin proformas aprobadas pendientes de facturar.</p>' :
+        pending.map(o => `
+          <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">Bodega Verificada</span>
+            <h3 class="font-black text-base text-slate-900">Proforma: ${o.proforma_number}</h3>
+            <p class="text-xs font-bold text-slate-700">${o.client_name}</p>
+
+            <div class="flex items-center gap-2 border-t border-slate-100 pt-3">
+              <input id="inv_num_${o.id}" placeholder="N° Factura Fiscal Oficial"
+                class="border border-slate-300 p-2 rounded-xl text-xs flex-1 font-bold outline-none focus:ring-2 focus:ring-brand-500">
+              <button onclick="convertirFactura(${o.id})"
+                class="bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition">
+                Emitir Factura
+              </button>
+            </div>
+          </div>
+        `).join('');
+    }
+
+    async function convertirFactura(id) {
+      const input = document.getElementById(`inv_num_${id}`);
+      const invoice_number = input ? input.value.trim() : '';
+      if (!invoice_number) return showToast('Ingrese el número de factura fiscal', 'error');
+
+      const res = await fetch(`/api/orders/${id}/facturar`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ invoice_number })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Factura emitida exitosamente', 'success');
+        loadAllData();
+      }
+    }
+
+    // =========================================================================
+    // MODAL DE IMPRESIÓN OFICIAL (HOJA DE PICKING & MANIFIESTO DE RUTA)
+    // =========================================================================
+    function openPrintModal(routeId) {
+      const route = globalRoutes.find(r => r.id === routeId);
+      if (!route) return;
+
+      document.getElementById('rep_route_id').innerText = `Ruta #${route.id}`;
+      document.getElementById('rep_date').innerText = new Date(route.created_at).toLocaleDateString('es-ES', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+      document.getElementById('rep_driver').innerText = route.driver_name;
+      document.getElementById('rep_vehicle').innerText = route.vehicle || 'Vehículo de Flota Asignado';
+      document.getElementById('rep_picking_status').innerText = route.picking_confirmed ? 'VERIFICADO Y CARGADO' : 'EN PREPARACIÓN';
+      document.getElementById('rep_total_orders').innerText = `${route.stops.length} paradas`;
+      document.getElementById('rep_generated_at').innerText = new Date().toLocaleString();
+
+      // Resumen Consolidado de Picking
+      const summaryTbody = document.getElementById('rep_summary_table');
+      const pickingItems = route.picking_items || [];
+
+      summaryTbody.innerHTML = pickingItems.length === 0 ? '<tr><td colspan="5" class="p-2 text-center text-slate-400">Sin ítems consolidados</td></tr>' :
+        pickingItems.map(p => `
+          <tr>
+            <td class="border border-slate-300 p-2 text-center font-bold font-mono">[ ${p.checked ? '✔' : ' '} ]</td>
+            <td class="border border-slate-300 p-2 font-mono font-bold">${p.product_code}</td>
+            <td class="border border-slate-300 p-2">${p.product_name}</td>
+            <td class="border border-slate-300 p-2 text-center font-black">${p.total_quantity} uds</td>
+            <td class="border border-slate-300 p-2 text-center">${p.checked ? 'Cargado en camión' : 'Por verificar'}</td>
+          </tr>
+        `).join('');
+
+      // Secuencia de Paradas
+      const detailTbody = document.getElementById('rep_detail_table');
+      detailTbody.innerHTML = route.stops.map(s => {
+        const order = s.order_id ? globalOrders.find(o => o.id === s.order_id) : null;
+        return `
+          <tr>
+            <td class="border border-slate-300 p-2 text-center font-bold">${s.sequence}</td>
+            <td class="border border-slate-300 p-2 font-bold">${s.type === 'PICKUP' ? 'RECOLECCIÓN' : 'ENTREGA'}</td>
+            <td class="border border-slate-300 p-2">
+              <b>${s.title}</b><br>
+              <span class="text-slate-500">${s.address}</span>
+              ${s.phone ? `<br><span class="text-brand-800">Tel: ${s.phone}</span>` : ''}
+              ${order && order.invoice_number ? `<br><b>Factura: ${order.invoice_number}</b>` : ''}
+            </td>
+            <td class="border border-slate-300 p-2">
+              ${order ? order.items.map(i => `• <b>${i.quantity}x</b> ${i.product_name}`).join('<br>') : (s.details || '-')}
+            </td>
+            <td class="border border-slate-300 p-2 text-center">
+              ${s.status !== 'PENDIENTE' ? `<b>${s.status}</b>` : 'Pendiente'}<br>
+              ${s.notes ? `<i class="text-[10px] text-slate-500">Nota: ${s.notes}</i>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('printModal').classList.remove('hidden');
+    }
+
+    function closePrintModal() {
+      document.getElementById('printModal').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // CLIENTES & PRODUCTOS (CRUD)
+    // =========================================================================
+    function renderClients() {
+      const search = (document.getElementById('searchClientTable')?.value || '').toLowerCase();
+      let list = globalClients;
+      if (search) list = list.filter(c => c.code.toLowerCase().includes(search) || c.name.toLowerCase().includes(search));
+
+      const div = document.getElementById('clientsTable');
+      if (!div) return;
+
+      div.innerHTML = `
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+            <tr><th class="p-2.5">Código</th><th class="p-2.5">Nombre</th><th class="p-2.5">Dirección</th><th class="p-2.5">Teléfono</th><th class="p-2.5 text-center">Acción</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${list.map(c => `
+              <tr class="hover:bg-slate-50">
+                <td class="p-2.5 font-mono font-bold text-slate-800">${c.code}</td>
+                <td class="p-2.5 font-bold">${c.name}</td>
+                <td class="p-2.5 text-slate-600">${c.address}</td>
+                <td class="p-2.5 text-slate-600">${c.phone || '-'}</td>
+                <td class="p-2.5 text-center">
+                  <button onclick="deleteClient(${c.id})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function saveClient(e) {
+      e.preventDefault();
+      const body = {
+        code: document.getElementById('c_code').value.trim(),
+        name: document.getElementById('c_name').value.trim(),
+        address: document.getElementById('c_address').value.trim(),
+        phone: document.getElementById('c_phone').value.trim(),
+        lat: document.getElementById('c_lat').value.trim(),
+        lng: document.getElementById('c_lng').value.trim()
+      };
+      await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      showToast('Cliente guardado con éxito', 'success');
+      document.getElementById('c_code').value = '';
+      document.getElementById('c_name').value = '';
+      document.getElementById('c_address').value = '';
+      document.getElementById('c_phone').value = '';
+      document.getElementById('c_lat').value = '';
+      document.getElementById('c_lng').value = '';
+      loadAllData();
+    }
+
+    async function deleteClient(id) {
+      if (confirm('¿Eliminar cliente?')) {
+        await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+        showToast('Cliente eliminado', 'info');
+        loadAllData();
+      }
+    }
+
+    function renderProducts() {
+      const search = (document.getElementById('searchProductTable')?.value || '').toLowerCase();
+      let list = globalProducts;
+      if (search) list = list.filter(p => p.code.toLowerCase().includes(search) || p.name.toLowerCase().includes(search));
+
+      const div = document.getElementById('productsTable');
+      if (!div) return;
+
+      div.innerHTML = `
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-100 text-slate-700 font-bold sticky top-0">
+            <tr><th class="p-2.5">Código</th><th class="p-2.5">Producto</th><th class="p-2.5 text-right">Precio</th><th class="p-2.5 text-center">Stock</th><th class="p-2.5 text-center">Acción</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            ${list.map(p => `
+              <tr class="hover:bg-slate-50">
+                <td class="p-2.5 font-mono font-bold text-slate-800">${p.code}</td>
+                <td class="p-2.5 font-medium">${p.name}</td>
+                <td class="p-2.5 text-right font-black text-brand-900">$${p.price.toFixed(2)}</td>
+                <td class="p-2.5 text-center"><span class="bg-slate-100 font-bold px-2 py-0.5 rounded">${p.stock || 0}</span></td>
+                <td class="p-2.5 text-center">
+                  <button onclick="deleteProduct(${p.id})" class="text-rose-500 hover:text-rose-700"><i class="fa-solid fa-trash"></i></button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function saveProduct(e) {
+      e.preventDefault();
+      const body = {
+        code: document.getElementById('p_code').value.trim(),
+        name: document.getElementById('p_name').value.trim(),
+        price: document.getElementById('p_price').value,
+        stock: document.getElementById('p_stock').value
+      };
+      await fetch('/api/products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      showToast('Producto guardado en inventario', 'success');
+      document.getElementById('p_code').value = '';
+      document.getElementById('p_name').value = '';
+      document.getElementById('p_price').value = '';
+      document.getElementById('p_stock').value = '';
+      loadAllData();
+    }
+
+    async function deleteProduct(id) {
+      if (confirm('¿Eliminar producto?')) {
+        await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        showToast('Producto eliminado', 'info');
+        loadAllData();
+      }
+    }
+  </script>
+</body>
+</html>
